@@ -58,8 +58,8 @@
             
             <p>Thank you for choosing our service!</p>
             
-            <p>Best regards,<br>
-            {{ config('app.name') }}</p>
+            <p>Regards,<br>
+            Super Carry Emission Testing Co</p>
         </div>
         
         <div class="footer">

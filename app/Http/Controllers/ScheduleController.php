@@ -73,17 +73,35 @@ class ScheduleController extends Controller
      */
     public function store(Request $request)
     {
+        \Log::info('Form submission received', $request->all());
         $request->validate([
             'vehicle_id' => 'required|exists:vehicles,id',
             'test_date' => 'required|date|after:today',
-            'test_time' => 'required|date_format:H:i',
+            'test_time' => 'required',
             'test_type' => 'required|in:initial,renewal,retest',
             'notes' => 'nullable|string|max:500',
             'mobile_number' => 'required|regex:/^09[0-9]{9}$/'
         ]);
 
+        // Parse the test date and time
+        $testDate = $request->test_date;
+        $testTime = $request->test_time;
+        
+        \Log::info('Initial values', [
+            'test_date' => $testDate,
+            'test_time' => $testTime,
+            'raw_input' => $request->all()
+        ]);
+        
+        // If test_time contains a date (from schedule_slot), use that instead
+        if (str_contains($testTime, ' ')) {
+            [$datePart, $timePart] = explode(' ', $testTime);
+            $testDate = $datePart;
+            $testTime = $timePart;
+        }
+
         // Check if the time slot is already booked
-        if ($this->isTimeSlotBooked($request->test_date, $request->test_time)) {
+        if ($this->isTimeSlotBooked($testDate, $testTime)) {
             return back()->withErrors(['test_time' => 'This time slot is not available. Please choose another time.'])->withInput();
         }
 
@@ -102,11 +120,13 @@ class ScheduleController extends Controller
             $paymentProofPath = $file->storeAs('payment_proofs', $fileName, 'public');
         }
 
+        // Use the parsed date and time
+        
         $schedule = Schedule::create([
             'user_id' => Auth::id(),
             'vehicle_id' => $vehicle->id,
-            'test_date' => $request->test_date,
-            'test_time' => $request->test_date . ' ' . $request->test_time,
+            'test_date' => $testDate,
+            'test_time' => $testTime,
             'test_type' => $request->test_type,
             'status' => 'pending', // Pending admin confirmation
             'notes' => $request->notes,
@@ -331,47 +351,25 @@ class ScheduleController extends Controller
      */
     private function getBookedTimeSlots($excludeScheduleId = null)
     {
-        $query = Schedule::where('test_date', '>=', Carbon::today())
-            ->where('test_date', '<=', Carbon::today()->addDays(30))
-            ->whereIn('status', ['pending', 'confirmed', 'completed']);
-
+        $startDate = now();
+        $endDate = now()->addDays(30);
+        
+        $query = Schedule::whereBetween('test_date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
+            ->whereIn('status', ['pending', 'confirmed']);
+            
         if ($excludeScheduleId) {
             $query->where('id', '!=', $excludeScheduleId);
         }
-
-        $schedules = $query->get();
         
-        $bookedTimeSlots = [];
+        $bookedSlots = $query->get(['test_date', 'test_time']);
         
-        // Define working hours (8:00 AM to 5:00 PM)
-        $workingHours = [];
-        for ($i = 8; $i <= 16; $i++) {
-            $workingHours[] = sprintf('%02d:00', $i);
-        }
-        
-        foreach ($schedules as $schedule) {
-            $date = $schedule->test_date->format('Y-m-d');
-            $time = $schedule->test_time;
-            
-            if (!isset($bookedTimeSlots[$date])) {
-                $bookedTimeSlots[$date] = [];
-            }
-            
-            // Add the booked time slot
-            if (!in_array($time, $bookedTimeSlots[$date])) {
-                $bookedTimeSlots[$date][] = $time;
-            }
-        }
-        
-        // Sort the time slots for each date
-        foreach ($bookedTimeSlots as $date => $times) {
-            usort($times, function($a, $b) {
-                return strtotime($a) - strtotime($b);
-            });
-            $bookedTimeSlots[$date] = $times;
-        }
-        
-        return $bookedTimeSlots;
+        // Return as array of arrays with test_date and test_time
+        return $bookedSlots->map(function($item) {
+            return [
+                'test_date' => $item->test_date,
+                'test_time' => $item->test_time
+            ];
+        })->toArray();
     }
 
     /**
@@ -379,32 +377,31 @@ class ScheduleController extends Controller
      */
     private function isTimeSlotBooked($date, $time, $excludeScheduleId = null)
     {
-        $query = Schedule::where('test_date', $date)
-            ->whereIn('status', ['pending', 'confirmed', 'completed']);
-
-        if ($excludeScheduleId) {
-            $query->where('id', '!=', $excludeScheduleId);
+        // If time contains a space, it's in the format 'Y-m-d H:i:s' from schedule_slot
+        if (str_contains($time, ' ')) {
+            [$date, $time] = explode(' ', $time);
         }
-
-        $schedules = $query->get();
-        $requestedTime = Carbon::parse($time);
-        $testDurationMinutes = 90; // 1.5 hours in minutes
-        $requestedEnd = $requestedTime->copy()->addMinutes($testDurationMinutes);
         
-        // Check for exact time match first (simplest case)
+        // Parse the requested time
+        $requestedTime = \Carbon\Carbon::parse($time);
+        $requestedEnd = $requestedTime->copy()->addHour(); // 1-hour time slot
+        
+        // Get all schedules for the selected date
+        $schedules = Schedule::where('test_date', $date)
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->when($excludeScheduleId, function($query) use ($excludeScheduleId) {
+                return $query->where('id', '!=', $excludeScheduleId);
+            })
+            ->get();
+            
         foreach ($schedules as $schedule) {
-            $scheduleTime = Carbon::parse($schedule->test_time);
-            $scheduleEnd = $scheduleTime->copy()->addMinutes($testDurationMinutes);
+            $scheduleTime = \Carbon\Carbon::parse($schedule->test_time);
+            $scheduleEnd = $scheduleTime->copy()->addHour(); // Assuming 1-hour slots
             
-            // If the exact time is already taken, return true
-            if ($scheduleTime->format('H:i') === $requestedTime->format('H:i')) {
-                return true;
-            }
-            
-            // Check for any overlap between the requested time slot and existing schedule
-            if ($requestedTime->between($scheduleTime, $scheduleEnd, true) ||  // Requested start is during an existing schedule
-                $requestedEnd->between($scheduleTime, $scheduleEnd, true) ||    // Requested end is during an existing schedule
-                ($requestedTime->lte($scheduleTime) && $requestedEnd->gte($scheduleEnd))) { // Requested time completely contains an existing schedule
+            // Check for any overlap
+            if ($requestedTime->between($scheduleTime, $scheduleEnd, true) ||
+                $requestedEnd->between($scheduleTime, $scheduleEnd, true) ||
+                ($requestedTime->lte($scheduleTime) && $requestedEnd->gte($scheduleEnd))) {
                 return true;
             }
         }

@@ -59,11 +59,29 @@
                                 <div class="text-sm font-medium text-gray-500 mb-1">Customer</div>
                                 <div class="font-semibold text-gray-900">{{ $schedule->user->name }}</div>
                                 <div class="text-sm text-gray-600">{{ $schedule->user->email }}</div>
+                                @if($schedule->mobile_number)
+                                <div class="mt-1">
+                                    <a href="tel:{{ $schedule->mobile_number }}" class="text-blue-600 hover:text-blue-800 flex items-center">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                        </svg>
+                                        {{ $schedule->mobile_number }}
+                                    </a>
+                                </div>
+                                @endif
                             </div>
                             <div>
                                 <div class="text-sm font-medium text-gray-500 mb-1">Vehicle</div>
                                 <div class="font-semibold text-gray-900">{{ $schedule->vehicle->year }} {{ $schedule->vehicle->make }} {{ $schedule->vehicle->model }}</div>
-                                <div class="text-sm text-gray-600">Plate: {{ $schedule->vehicle->plate_number }}</div>
+                                <div class="text-sm text-gray-600">
+                                    <div>Plate: <span class="font-medium">{{ $schedule->vehicle->plate_number }}</span></div>
+                                    <div>Type: <span class="font-medium capitalize">{{ $schedule->vehicle->vehicle_type }}</span></div>
+                                    <div class="mt-2">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            {{ strtoupper($schedule->test_type) }} TEST
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -96,6 +114,16 @@
                                 <div>Paid on: <span class="font-medium">{{ $schedule->downpayment_paid_at->format('M d, Y g:i A') }}</span></div>
                             @endif
                             <div>Transaction ID: <span class="font-mono font-semibold">{{ $schedule->transaction_id ?? '—' }}</span></div>
+                            @if($schedule->payment_proof)
+                            <div class="mt-2">
+                                <a href="{{ asset('storage/' . $schedule->payment_proof) }}" target="_blank" class="text-blue-600 hover:text-blue-800 flex items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    View Payment Proof
+                                </a>
+                            </div>
+                            @endif
                             @if($schedule->payment_notes)
                                 <div class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded">{{ $schedule->payment_notes }}</div>
                             @endif
@@ -117,6 +145,24 @@
                 </div>
             </div>
 
+            @if($schedule->notes)
+            <div class="card mt-6">
+                <div class="card-header bg-blue-50">
+                    <h2 class="card-title text-blue-800">
+                        <svg class="w-5 h-5 inline-block mr-2 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Customer Notes
+                    </h2>
+                </div>
+                <div class="card-content bg-white">
+                    <div class="whitespace-pre-wrap text-gray-800 bg-white p-4 border border-gray-100 rounded-lg">
+                        {!! nl2br(e($schedule->notes)) !!}
+                    </div>
+                </div>
+            </div>
+            @endif
+
             <div class="mt-8 flex items-center gap-3">
                 @if($schedule->status === 'pending' && $schedule->downpayment_status === 'pending')
                     <form method="POST" action="{{ route('admin.schedules.confirm', $schedule) }}">
@@ -135,18 +181,70 @@
                         Reject Payment
                     </button>
                 @elseif($schedule->status === 'confirmed')
-                    <div class="text-green-600 font-medium">
-                        <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                        Payment Confirmed & Schedule Approved
+                    <div class="flex items-center gap-4 w-full">
+                        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 flex-1">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm font-bold text-gray-900">
+                                        Payment Confirmed & Schedule Approved
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <form method="POST" action="{{ route('admin.schedules.complete', $schedule) }}" class="flex-shrink-0">
+                            @csrf
+                            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg flex items-center transition-colors duration-200" 
+                                    onclick="return confirm('Mark this schedule as completed? This will make the time slot available again.')">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                Mark as Completed
+                            </button>
+                        </form>
                     </div>
                 @elseif($schedule->status === 'cancelled')
-                    <div class="text-red-600 font-medium">
-                        <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                        Payment Rejected & Schedule Cancelled
+                    <div class="bg-red-50 border-l-4 border-red-500 p-4 w-full">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-bold text-gray-900">
+                                    Payment Rejected & Schedule Cancelled
+                                </p>
+                                @if(isset($schedule->rejection_reason))
+                                    <div class="mt-2 text-sm text-gray-700">
+                                        <p class="font-semibold">Reason:</p>
+                                        <p class="mt-1">{{ $schedule->rejection_reason }}</p>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                @elseif($schedule->status === 'completed')
+                    <div class="bg-green-50 border-l-4 border-green-500 p-4 w-full">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-bold text-gray-900">
+                                    Test Successfully Completed
+                                </p>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    Emission test was completed on {{ $schedule->updated_at->format('M d, Y \a\t g:i A') }}
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 @endif
             </div>

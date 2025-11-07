@@ -82,6 +82,7 @@ Route::middleware('auth')->get('/admin', [\App\Http\Controllers\AdminController:
 Route::middleware('auth')->get('/admin/schedules/{schedule}', [\App\Http\Controllers\AdminController::class, 'show'])->name('admin.schedules.show');
 Route::middleware('auth')->post('/admin/schedules/{schedule}/confirm', [\App\Http\Controllers\AdminController::class, 'confirm'])->name('admin.schedules.confirm');
 Route::middleware('auth')->post('/admin/schedules/{schedule}/reject', [\App\Http\Controllers\AdminController::class, 'reject'])->name('admin.schedules.reject');
+Route::middleware('auth')->post('/admin/schedules/{schedule}/complete', [\App\Http\Controllers\AdminController::class, 'complete'])->name('admin.schedules.complete');
 Route::middleware('auth')->delete('/admin/schedules/{schedule}', [\App\Http\Controllers\AdminController::class, 'destroy'])->name('admin.schedules.destroy');
 
 // Payment confirmation routes

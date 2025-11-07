@@ -19,13 +19,24 @@
 <body class="min-h-screen bg-blue-100" style="background-color:#e0f2fe;">
     <header class="app-header">
         <nav class="app-nav">
-            <div class="app-logo">
-                <a href="/" class="flex items-center gap-3">
-                    <span class="app-logo-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6"><path d="M7 21a1 1 0 0 1-1-1v-1.382a4 4 0 0 1 1.172-2.829l6.647-6.647a2 2 0 1 1 2.828 2.829L10 18.618A4 4 0 0 1 7.171 20H7Z"/><path d="M15 3a4 4 0 0 1 4 4v2h-2V7a2 2 0 1 0-4 0v.586l-2 2V7a4 4 0 0 1 4-4Z"/></svg>
+            <div class="flex items-center">
+                <a href="#" onclick="window.history.back(); return false;" class="back-button-with-text flex items-center">
+                    <span class="back-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M19 12H5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M12 19L5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
                     </span>
-                    <span class="app-logo-text">Super Carry Emission Testing Co</span>
+                    <span class="back-text ml-2">Back</span>
                 </a>
+                <div class="app-logo ml-4">
+                    <a href="/" class="flex items-center gap-3">
+                        <span class="app-logo-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6"><path d="M7 21a1 1 0 0 1-1-1v-1.382a4 4 0 0 1 1.172-2.829l6.647-6.647a2 2 0 1 1 2.828 2.829L10 18.618A4 4 0 0 1 7.171 20H7Z"/><path d="M15 3a4 4 0 0 1 4 4v2h-2V7a2 2 0 1 0-4 0v.586l-2 2V7a4 4 0 0 1 4-4Z"/></svg>
+                        </span>
+                        <span class="app-logo-text">Super Carry Emission Testing Co</span>
+                    </a>
+                </div>
             </div>
             <div class="app-nav-actions">
                 <a href="{{ route('profile.show') }}" class="app-user-profile">

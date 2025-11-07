@@ -71,6 +71,15 @@ class AdminController extends Controller
             'rejection_reason' => 'required|string|max:500'
         ]);
 
+        // Log the time slot being freed up before updating
+        \Log::info('Time slot freed up after rejection', [
+            'schedule_id' => $schedule->id,
+            'original_date' => $schedule->test_date,
+            'original_time' => $schedule->test_time,
+            'rejection_reason' => $validated['rejection_reason']
+        ]);
+        
+        // Update the schedule status to cancelled
         $schedule->update([
             'status' => 'cancelled',
             'downpayment_status' => 'refunded',
@@ -97,6 +106,44 @@ class AdminController extends Controller
 
         return redirect()->route('admin.schedules.show', $schedule)
             ->with('status', 'Payment rejected and schedule cancelled. The customer has been notified.');
+    }
+
+    /**
+     * Mark a schedule as completed
+     */
+    public function complete(Schedule $schedule)
+    {
+        // Only allow completing confirmed schedules
+        if ($schedule->status !== 'confirmed') {
+            return redirect()->back()
+                ->with('error', 'Only confirmed schedules can be marked as completed.');
+        }
+
+        $schedule->update([
+            'status' => 'completed',
+            'payment_notes' => trim(($schedule->payment_notes ? $schedule->payment_notes.'\n' : '').'[Admin] Marked as completed on '.now()->format('M d, Y g:i A')),
+        ]);
+
+        // Send completion email to customer
+        try {
+            // Refresh the schedule to ensure we have the latest data
+            $schedule->refresh();
+            
+            // Log the email sending attempt
+            \Log::info('Sending completion email for schedule #' . $schedule->id . ' to ' . $schedule->user->email);
+            
+            // Send completion email (you'll need to create this Mailable)
+            // Mail::to($schedule->user->email)->send(new \App\Mail\ScheduleCompleted($schedule));
+            \Log::info('Completion email sent successfully for schedule #' . $schedule->id);
+            $message = 'Schedule marked as completed. Notification email has been sent to the customer.';
+        } catch (\Exception $e) {
+            $errorMsg = 'Failed to send completion email: ' . $e->getMessage();
+            \Log::error($errorMsg);
+            $message = 'Schedule marked as completed, but failed to send notification email: ' . $e->getMessage();
+        }
+
+        return redirect()->route('admin.schedules.show', $schedule)
+            ->with('status', $message);
     }
 
     public function destroy(Schedule $schedule)

@@ -9,6 +9,47 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700,800" rel="stylesheet" />
     
+    <style>
+        .back-button-with-text {
+            display: inline-flex;
+            align-items: center;
+            background: white;
+            color: #4B5563;
+            padding: 8px 16px 8px 8px;
+            border-radius: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+            text-decoration: none;
+            font-weight: 500;
+            margin-right: 16px;
+        }
+        
+        .back-button-with-text:hover {
+            background: #f3f4f6;
+            transform: translateY(-1px);
+        }
+        
+        .back-button-with-text:active {
+            transform: translateY(0);
+        }
+        
+        .back-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #f3f4f6;
+            margin-right: 8px;
+        }
+        
+        .back-text {
+            color: #4B5563;
+            font-size: 0.95rem;
+        }
+    </style>
+    
             @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
             @vite(['resources/css/app.css', 'resources/js/app.js'])
         @else
@@ -24,14 +65,25 @@
     <!-- Header -->
     <header class="app-header">
         <nav class="app-nav">
-            <div class="app-logo">
-                <a href="/" class="flex items-center gap-3">
-                    <span class="app-logo-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6"><path d="M7 21a1 1 0 0 1-1-1v-1.382a4 4 0 0 1 1.172-2.829l6.647-6.647a2 2 0 1 1 2.828 2.829L10 18.618A4 4 0 0 1 7.171 20H7Z"/><path d="M15 3a4 4 0 0 1 4 4v2h-2V7a2 2 0 1 0-4 0v.586l-2 2V7a4 4 0 0 1 4-4Z"/></svg>
+            <div class="flex items-center">
+                <a href="{{ url()->previous() }}" class="back-button-with-text flex items-center">
+                    <span class="back-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M19 12H5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M12 19L5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
                     </span>
-                    <span class="app-logo-text">Super Carry Emission Testing Co</span>
+                    <span class="back-text ml-2">Back</span>
                 </a>
+                <div class="app-logo">
+                    <a href="/" class="flex items-center gap-3">
+                        <span class="app-logo-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6"><path d="M7 21a1 1 0 0 1-1-1v-1.382a4 4 0 0 1 1.172-2.829l6.647-6.647a2 2 0 1 1 2.828 2.829L10 18.618A4 4 0 0 1 7.171 20H7Z"/><path d="M15 3a4 4 0 0 1 4 4v2h-2V7a2 2 0 1 0-4 0v.586l-2 2V7a4 4 0 0 1 4-4Z"/></svg>
+                        </span>
+                        <span class="app-logo-text">Super Carry Emission Testing Co</span>
+                    </a>
                 </div>
+            </div>
             <div class="app-nav-actions">
                 <a href="{{ route('profile.show') }}" class="app-user-profile">
                     <span class="app-user-avatar">
@@ -103,54 +155,70 @@
                         </div>
                     </div>
 
-                    <!-- Test Date and Time -->
+                    <!-- Schedule Selection -->
                     <div class="card interactive">
                         <div class="card-header">
                             <h3 class="card-title gradient-text">Schedule Details</h3>
-                            <p class="card-subtitle">Choose your preferred date and time</p>
+                            <p class="card-subtitle">Choose your preferred date and time slot</p>
                         </div>
                         <div class="card-content">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div class="form-group">
-                                    <label for="test_date" class="form-label">Test Date</label>
-                                    <input type="date" name="test_date" id="test_date" required min="{{ date('Y-m-d', strtotime('+1 day')) }}" class="form-input">
-                                    <p class="form-help">Select a date for your emission test</p>
-                            @error('test_date')
-                                        <p class="form-error">{{ $message }}</p>
-                            @enderror
-                        </div>
-                                <div class="form-group">
-                                    <label for="test_time" class="form-label">Test Time</label>
-                                    <select name="test_time" id="test_time" required class="form-select">
-                                <option value="">Select a time</option>
-                                <option value="08:00">8:00 AM - 9:30 AM</option>
-                                <option value="10:00">10:00 AM - 11:30 AM</option>
-                                <option value="12:00">12:00 PM - 1:30 PM</option>
-                                <option value="14:00">2:00 PM - 3:30 PM</option>
-                                <option value="16:00">4:00 PM - 5:30 PM</option>
-                            </select>
-                                    <p class="form-help">Each test session is 1.5 hours long. Please select an available time slot.</p>
-                            @error('test_time')
-                                        <p class="form-error">{{ $message }}</p>
-                            @enderror
-                        </div>
-                    </div>
-
-                    <!-- Time Slot Availability Check -->
-                            <div id="time-slot-availability" class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg hidden">
-                                <div class="flex items-center">
-                                    <svg class="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
-                                    <span class="font-medium text-blue-900">Time Slot Availability:</span>
-                                    <span id="availability-status" class="ml-2 font-semibold"></span>
-                                </div>
-                                <p id="availability-message" class="text-blue-700 mt-1"></p>
+                            <div class="form-group">
+                                <label for="schedule_slot" class="form-label">Available Time Slots</label>
+                                <select name="schedule_slot" id="schedule_slot" required class="form-select">
+                                    <option value="">Select a date and time</option>
+                                    @php
+                                        $startDate = now()->addDay();
+                                        $endDate = now()->addDays(30);
+                                        $timeSlots = [
+                                            '08:00' => '8:00 AM - 9:00 AM',
+                                            '10:00' => '10:00 AM - 11:00 AM',
+                                            '13:00' => '1:00 PM - 2:00 PM',
+                                            '15:00' => '3:00 PM - 4:00 PM'
+                                        ];
+                                    @endphp
+                                    
+                                    @for($date = $startDate; $date->lte($endDate); $date->addDay())
+                                        @if(!$date->isWeekend())
+                                            <optgroup label="{{ $date->format('l, F j, Y') }}">
+                                                @foreach($timeSlots as $time => $label)
+                                                    @php
+                                                        $slotDateTime = $date->copy()->setTimeFromTimeString($time);
+                                                        $slotKey = $date->format('Y-m-d') . ' ' . $time . ':00';
+                                                        $isBooked = false;
+                                                        
+                                                        // Check if this slot is booked
+                                                        foreach ($bookedTimeSlots as $bookedSlot) {
+                                                            $bookedDate = \Carbon\Carbon::parse($bookedSlot['test_date'])->format('Y-m-d');
+                                                            $bookedTime = \Carbon\Carbon::parse($bookedSlot['test_time'])->format('H:i');
+                                                            
+                                                            if ($bookedDate === $date->format('Y-m-d') && $bookedTime === $time) {
+                                                                $isBooked = true;
+                                                                break;
+                                                            }
+                                                        }
+                                                    @endphp
+                                                    @if($isBooked)
+                                                        <option value="" disabled>Time Not Available ({{ $label }})</option>
+                                                    @else
+                                                        <option value="{{ $slotKey }}">{{ $label }}</option>
+                                                    @endif
+                                                @endforeach
+                                            </optgroup>
+                                        @endif
+                                    @endfor
+                                </select>
+                                <input type="hidden" name="test_date" id="test_date">
+                                <input type="hidden" name="test_time" id="test_time">
+                                <p class="form-help">Select your preferred time slot. Each test session is 1 hour long.</p>
+                                @error('schedule_slot')
+                                    <p class="form-error">{{ $message }}</p>
+                                @enderror
                             </div>
                         </div>
                     </div>
 
                     <!-- Test Type and Pricing -->
+                    <!-- Test Type & Pricing -->
                     <div class="card interactive">
                         <div class="card-header">
                             <h3 class="card-title gradient-text">Test Type & Pricing</h3>
@@ -278,6 +346,64 @@
         // Booked time slots from the server
         const bookedTimeSlots = @json($bookedTimeSlots);
         
+        // Handle schedule slot selection
+        document.addEventListener('DOMContentLoaded', function() {
+            const scheduleSlot = document.getElementById('schedule_slot');
+            const form = document.querySelector('form');
+            const submitButton = form.querySelector('button[type="submit"]');
+            
+            // Function to handle slot selection
+            function handleSlotSelection() {
+                const selectedOption = scheduleSlot.options[scheduleSlot.selectedIndex];
+                const dateInput = document.getElementById('test_date');
+                const timeInput = document.getElementById('test_time');
+                
+                if (selectedOption && selectedOption.value) {
+                    // Format: 'Y-m-d H:i:s'
+                    const [date, time] = selectedOption.value.split(' ');
+                    dateInput.value = date;
+                    timeInput.value = time;
+                    
+                    // Enable the form submission
+                    submitButton.disabled = false;
+                    console.log('Selected slot:', { date, time });
+                } else {
+                    dateInput.value = '';
+                    timeInput.value = '';
+                    submitButton.disabled = true;
+                }
+            }
+            
+            // Handle form submission
+            form.addEventListener('submit', function(e) {
+                const dateInput = document.getElementById('test_date');
+                const timeInput = document.getElementById('test_time');
+                
+                if (!dateInput.value || !timeInput.value) {
+                    e.preventDefault();
+                    alert('Please select a valid time slot');
+                    return false;
+                }
+                
+                // Show loading state
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            });
+            
+            // Initialize
+            scheduleSlot.addEventListener('change', handleSlotSelection);
+            submitButton.disabled = true;
+            
+            // If there's a validation error, try to restore the selected value
+            @if($errors->any())
+                const selectedValue = '{{ old('schedule_slot') }}';
+                if (selectedValue) {
+                    scheduleSlot.value = selectedValue;
+                    handleSlotSelection();
+                }
+            @endif
+        });
+        
         // Time slot availability checking
         function checkTimeSlotAvailability() {
             const selectedDate = document.getElementById('test_date').value;
@@ -356,9 +482,9 @@
         
         // Update time slot dropdown based on selected date
         function updateTimeSlots() {
-            const dateInput = document.getElementById('test_date');
-            const timeSelect = document.getElementById('test_time');
-            const selectedDate = dateInput.value;
+            // This function is no longer needed as we're using a combined dropdown
+            // Keeping it for backward compatibility
+            return;
             
             if (!selectedDate) {
                 return;
